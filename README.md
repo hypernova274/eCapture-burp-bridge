@@ -43,6 +43,7 @@
 6. 产生网络流量后，面板表格会显示事件；选中行：
    - HTTP：底部显示 Request/Response
    - 非 HTTP：底部显示 Raw（原始字节）
+![image](https://github.com/user-attachments/assets/726e75bf-cdc8-4029-80e5-36965830a2cd)
 
 <img width="2560" height="1200" alt="image-20251210015217178" src="https://github.com/user-attachments/assets/ce70f1ce-0f26-416a-b799-f03541fe7ac0" />
 
