@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        // 1. 阿里云插件镜像 (强烈推荐，解决国内无法下载插件的问题)
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        // 2. 官方源作为备选
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'eCapture-Bridge'

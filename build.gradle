@@ -1,0 +1,58 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    dependencies {
+        // 修改点：将 8.1.2 改为 8.1.1 (这是真实存在的版本)
+        classpath 'com.github.johnrengelman:shadow:8.1.1'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+// 应用插件
+apply plugin: 'com.github.johnrengelman.shadow'
+
+group = 'com.ecapture.burp'
+version = '0.1.0'
+
+repositories {
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    // 你的 2025.11 版本
+    compileOnly 'net.portswigger.burp.extensions:montoya-api:2025.11'
+    implementation 'com.google.protobuf:protobuf-java:3.24.0'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.4'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.24.0'
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+shadowJar {
+    archiveBaseName.set('eCapture-Bridge')
+    archiveClassifier.set('')
+    archiveVersion.set(version)
+    mergeServiceFiles()
+}
