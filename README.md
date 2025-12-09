@@ -44,11 +44,13 @@
    - HTTP：底部显示 Request/Response
    - 非 HTTP：底部显示 Raw（原始字节）
 
-![image-20251210015217178](C:\Users\Administrator\Desktop\eCapture-burp-bridge\image-20251210015217178.png)
+![image-20251210015217178](<img width="2560" height="1200" alt="image-20251210015217178" src="https://github.com/user-attachments/assets/06fb732f-9c86-4141-8d74-da40c12ce31d" />
+)
 
 ## 界面说明
 
-<img src="C:\Users\Administrator\Desktop\eCapture-burp-bridge\image-20251210012109599.png" alt="image-20251210012109599" style="zoom: 50%;" />
+![image-20251210012109599](<img width="2554" height="1199" alt="image-20251210012109599" src="https://github.com/user-attachments/assets/b999357f-2179-40a3-bf70-144649108f20" />
+)
 
 - 顶部：连接/断开、自动重连、重试次数、最大历史、搜索/过滤框
 - 状态标签：未连接 / 连接中… / 已连接 / Closed / Error
