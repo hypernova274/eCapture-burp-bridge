@@ -1,85 +1,86 @@
+English | [中文](README_zh.md)
+
 # eCapture-burp-bridge
 
-一个连接本地 eCapture 的 Burp Suite 插件： WebSocket 客户端接收 Protobuf 事件流，解析出原始 HTTP 报文并透明转发到 Burp Proxy，同时把所有事件（包含非 HTTP）获取，便于调试和分析移动端/应用的网络流量。
+A Burp Suite extension that connects to local eCapture: a WebSocket client receives a Protobuf event stream, extracts raw HTTP messages and transparently forwards them to Burp Proxy, while ingesting all events (including non-HTTP) to help debug and analyze mobile/app network traffic.
 
-## 特性
-- 连接本地 eCapture（`ws://`/`wss://`），自动设置 `Origin` 头，规避 CSWSH 403 拒绝
-- 解析 Protobuf `LogEntry`，忽略心跳/运行日志，仅处理 `Event`
-- HTTP 请求透明转发到 Burp Proxy（Invisible Proxy 模式友好）
-- 所有事件入表显示：HTTP 与非 HTTP统一观测，非 HTTP 使用 `Method=NON-HTTP`、`HTTP=RAW` 并标注 `Type`
-- 计数标签实时显示：`总数`、`HTTP`、`非HTTP`
-- 搜索/过滤（方法、主机、状态码）与一键导出所选/全部
-- 自动重连（指数退避），连接状态可视化
+## Features
+- Connect to local eCapture (`ws://`/`wss://`), auto-set the `Origin` header to avoid CSWSH 403 rejections
+- Parse Protobuf `LogEntry`, ignore heartbeat/runtime logs, only handle `Event`
+- Transparently forward HTTP requests to Burp Proxy (friendly to Invisible Proxy mode)
+- Persist all events in the table: unified view for HTTP and non-HTTP; non-HTTP uses `Method=NON-HTTP`, `HTTP=RAW` and marks `Type`
+- Live counters: `Total`, `HTTP`, `Non-HTTP`
+- Search/filter (method, host, status code) and one-click export selected/all
+- Auto reconnect (exponential backoff) with visual connection status
 
-## 架构
-- Source：eCapture 在 `ws://127.0.0.1:28257/` 输出 Protobuf 事件
-- Bridge：WebSocket 客户端连接 → 解析 `Event` → 识别 HTTP → 转发到 Burp（仅 HTTP） → 所有事件入表
-- Destination：Burp Proxy（例如 `127.0.0.1:28887`），开启 Invisible Proxy
+## Architecture
+- Source: eCapture outputs Protobuf events at `ws://127.0.0.1:28257/`
+- Bridge: WebSocket client connect → parse `Event` → detect HTTP → forward to Burp (HTTP only) → persist all events into table
+- Destination: Burp Proxy (e.g., `127.0.0.1:28887`), enable Invisible Proxy
 
-## 环境要求
+## Requirements
 - Java 21
 - Gradle 8.x
-- Burp Suite（Montoya API 2025.11支持）
+- Burp Suite (Montoya API 2025.11 support)
 
-## 构建
+## Build
 ```powershell
-# 在项目根目录
+# In project root
 .\gradlew.bat shadowJar
-# 生成的插件 Jar：
+# Generated extension JAR:
 # build\libs\eCapture-Bridge-0.1.0.jar
 ```
 
-## 安装与使用
-1. 打开 Burp → Extender → Extensions → Add → 选择 `build\libs\eCapture-Bridge-0.1.0.jar`
-2. 连接手机，设置 ADB 端口转发： ```bash adb forward tcp:28257 tcp:28257```
-3. 启动 eCapture (开启 WebSocket 服务)：
-\# 替换 <PID> 为目标 App 的 PID 
+## Install & Use
+1. Open Burp → Extender → Extensions → Add → choose `build\libs\eCapture-Bridge-0.1.0.jar`
+2. Connect your phone and set ADB port forwarding: ```bash adb forward tcp:28257 tcp:28257```
+3. Start eCapture (enable the WebSocket service):
+# Replace <PID> with the target app PID
 ```./ecapture tls -p <PID> --ecaptureq=ws://0.0.0.0:28257/```
-4. 切换到 “eCapture Bridge” 标签页，填写：
-   - `WebSocket`：eCapture 地址（例如 `ws://127.0.0.1:28257/`）
-   - `Proxy Host`：Burp 代理主机（默认 `127.0.0.1`）
-   - `Port`：Burp 代理端口（例如 `28887`）
-5. 点击 `Connect`，状态显示 “connecting” → “connected” 即成功
-6. 产生网络流量后，面板表格会显示事件；选中行：
-   - HTTP：底部显示 Request/Response
-   - 非 HTTP：底部显示 Raw（原始字节）
-  
+4. Switch to the "eCapture Bridge" tab and fill in:
+   - `WebSocket`: eCapture address (e.g., `ws://127.0.0.1:28257/`)
+   - `Proxy Host`: Burp proxy host (default `127.0.0.1`)
+   - `Port`: Burp proxy port (e.g., `28887`)
+5. Click `Connect`; the status shows “connecting” → “connected” when successful
+6. Once there is network traffic, the table panel displays events; selecting a row:
+   - HTTP: request/response shown at the bottom
+   - Non-HTTP: raw bytes shown at the bottom
+
 <img width="2560" height="1200" alt="image-20251210015217178" src="https://github.com/user-attachments/assets/ce70f1ce-0f26-416a-b799-f03541fe7ac0" />
 
 <img src="https://github.com/user-attachments/assets/726e75bf-cdc8-4029-80e5-36965830a2cd" width="60%" alt="eCapture bridge interface main" />
 
 
-
-## 界面说明
+## UI Overview
 
 <img width="2554" height="1199" alt="image-20251210012109599" src="https://github.com/user-attachments/assets/39d26ad6-8e69-4ce6-8ee9-a967d388971b" />
 
+- Top bar: connect/disconnect, auto-reconnect, retry count, max history, search/filter input
+- Status badges: Not connected / Connecting… / Connected / Closed / Error
+- Counter badges: `Total N`, `HTTP H`, `Non-HTTP NH`
+- Table columns: `Time, Src, Dst, Method, Path, Host, HTTP, Type, Status, Length, Proc, UUID`
+- Export: export selected or all events to a text file
 
-- 顶部：连接/断开、自动重连、重试次数、最大历史、搜索/过滤框
-- 状态标签：未连接 / 连接中… / 已连接 / Closed / Error
-- 计数标签：`总数 N`、`HTTP H`、`非HTTP NH`
-- 表格列：`Time, Src, Dst, Method, Path, Host, HTTP, Type, Status, Length, Proc, UUID`
-- 导出：支持导出所选事件或全部事件到文本文件
+## Technical Details
+- WebSocket: uses Java-WebSocket; during handshake, computes `Origin: http://host:port` / `https://host:port` according to `ws://`/`wss://`
+- Protobuf: parses `LogEntry`, only processes `LOG_TYPE_EVENT`; heartbeat and runtime logs are ignored
+- HTTP detection: prefix match `GET/POST/PUT/DELETE/HEAD/OPTIONS/CONNECT`
+- Non-HTTP marking: `Method=NON-HTTP`, `HTTP=RAW`, `Path/Host` cleared, and `Type` mapped from `Event.type` (e.g., `TLS`, `HTTP2-Frame`, `MQTT`, `DNS`, `MySQL`, `Redis`, `PostgreSQL`, `MongoDB`, `WebSocket`, `QUIC`, `RAW`)
+- Response correlation: associate by request-bytes hash with Burp MessageId, backfill `Status/Response` and refresh the table
 
-## 技术细节
-- WebSocket：使用 Java-WebSocket，握手时根据 `ws://`/`wss://` 自动计算 `Origin: http://host:port` / `https://host:port`
-- Protobuf：解析 `LogEntry`，仅处理 `LOG_TYPE_EVENT`；心跳与运行日志忽略
-- HTTP 识别：前缀匹配 `GET/POST/PUT/DELETE/HEAD/OPTIONS/CONNECT`
-- 非 HTTP 标记：`Method=NON-HTTP`、`HTTP=RAW`、`Path/Host` 置空，并从 `Event.type` 映射 `Type`（如 `TLS`、`HTTP2-Frame`、`MQTT`、`DNS`、`MySQL`、`Redis`、`PostgreSQL`、`MongoDB`、`WebSocket`、`QUIC`、`RAW`）
-- 响应关联：按请求字节哈希与 Burp MessageId 关联，回填 `Status/Response` 并刷新表格
+## FAQ
+- 403 Forbidden: ensure eCapture’s actual listening address matches the `WebSocket` field; `Origin` is auto-set; if a fixed value is needed, adjust the source
+- Ensure `--ecaptureq` address in eCapture startup parameters ends with `/`
+- Connected but no traffic? Check that Burp Proxy has "Support invisible proxying" enabled
 
-## 常见问题
-- 403 Forbidden：确认 eCapture 实际监听与 `WebSocket` 字段一致；`Origin` 已自动设置，如需固定值可调整源码
-- 请确保 eCapture 启动参数中的 `--ecaptureq` 地址末尾带有 `/`
-- 连上后没有流量？ 请检查 Burp Proxy 设置中是否开启了 "Support invisible proxying"
-
-## 更新记录
+## Changelog
 2025.12.13
-- 修复非HTTP请求的RAW不显示问题，现已正常显示
-- 添加index序列号，删除Src,Dst列，添加清除日志，添加日志持久化同步burp项目方便历史排查分析
+- Fixed issue where RAW for non-HTTP requests did not display; it now shows correctly
+- Added index sequence; removed Src/Dst columns; added clear logs; added log persistence synchronized with the Burp project to facilitate historical investigation and analysis
 
-## 合规声明
-本项目仅用于安全测试与研究，请遵循当地法律法规与目标系统授权范围。
+## Compliance
+This project is for security testing and research only. Please comply with local laws and the authorized scope of target systems.
 
-## 致谢
-特别感谢 eCapture 作者的开源精神，为社区提供了高质量的流量HOOK与事件输出能力。eCapture 的稳定性与工程质量为本项目的实现奠定了基础。
+## Acknowledgements
+Special thanks to the author of eCapture for open sourcing and providing high-quality traffic HOOK and event output capabilities. eCapture’s stability and engineering quality laid the foundation for this project.
+
