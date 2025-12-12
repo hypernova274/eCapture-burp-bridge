@@ -34,7 +34,7 @@
 2. 连接手机，设置 ADB 端口转发： ```bash adb forward tcp:28257 tcp:28257```
 3. 启动 eCapture (开启 WebSocket 服务)：
 \# 替换 <PID> 为目标 App 的 PID 
-```./ecapture tls -p <PID> --ecaptureq=ws://0.0.0.0:28257/``
+```./ecapture tls -p <PID> --ecaptureq=ws://0.0.0.0:28257/```
 4. 切换到 “eCapture Bridge” 标签页，填写：
    - `WebSocket`：eCapture 地址（例如 `ws://127.0.0.1:28257/`）
    - `Proxy Host`：Burp 代理主机（默认 `127.0.0.1`）
@@ -72,6 +72,11 @@
 - 403 Forbidden：确认 eCapture 实际监听与 `WebSocket` 字段一致；`Origin` 已自动设置，如需固定值可调整源码
 - 请确保 eCapture 启动参数中的 `--ecaptureq` 地址末尾带有 `/`
 - 连上后没有流量？ 请检查 Burp Proxy 设置中是否开启了 "Support invisible proxying"
+
+## 更新记录
+2025.12.13
+- 修复非HTTP请求的RAW不显示问题，现已正常显示
+- 添加index序列号，删除Src,Dst列，添加清除日志，添加日志持久化同步burp项目方便历史排查分析
 
 ## 合规声明
 本项目仅用于安全测试与研究，请遵循当地法律法规与目标系统授权范围。
