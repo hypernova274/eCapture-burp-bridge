@@ -35,7 +35,7 @@ A Burp Suite extension that connects to local eCapture: a WebSocket client recei
 1. Open Burp → Extender → Extensions → Add → choose `build\libs\eCapture-Bridge-0.1.0.jar`
 2. Connect your phone and set ADB port forwarding: ```bash adb forward tcp:28257 tcp:28257```
 3. Start eCapture (enable the WebSocket service):
-# Replace <PID> with the target app PID
+Replace <PID> with the target app PID
 ```./ecapture tls -p <PID> --ecaptureq=ws://0.0.0.0:28257/```
 4. Switch to the "eCapture Bridge" tab and fill in:
    - `WebSocket`: eCapture address (e.g., `ws://127.0.0.1:28257/`)
