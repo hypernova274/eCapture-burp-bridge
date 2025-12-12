@@ -2,6 +2,7 @@ package com.ecapture.burp;
 
 import com.ecapture.burp.proto.ECaptureProto;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 class BridgeRecord {
     final long timestamp;
@@ -170,5 +171,101 @@ class BridgeRecord {
             default:
                 return "RAW";
         }
+    }
+    String toPersist() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(timestamp).append('\t');
+        sb.append(b64(uuid)).append('\t');
+        sb.append(b64(srcIp)).append('\t');
+        sb.append(srcPort).append('\t');
+        sb.append(b64(dstIp)).append('\t');
+        sb.append(dstPort).append('\t');
+        sb.append(pid).append('\t');
+        sb.append(b64(pname)).append('\t');
+        sb.append(b64(rawBytes)).append('\t');
+        sb.append(isHttp ? '1' : '0').append('\t');
+        sb.append(b64(type)).append('\t');
+        sb.append(statusCode).append('\t');
+        sb.append(b64(reason == null ? "" : reason)).append('\t');
+        sb.append(b64(responseBytes == null ? new byte[0] : responseBytes));
+        return sb.toString();
+    }
+
+    static BridgeRecord fromPersist(String line) {
+        String[] parts = split(line, 15);
+        long ts = parseLong(parts[0], 0L);
+        String uuid = b64s(parts[1]);
+        String srcIp = b64s(parts[2]);
+        int srcPort = parseInt(parts[3], 0);
+        String dstIp = b64s(parts[4]);
+        int dstPort = parseInt(parts[5], 0);
+        long pid = parseLong(parts[6], 0L);
+        String pname = b64s(parts[7]);
+        byte[] raw = b64b(parts[8]);
+        boolean isHttp = "1".equals(parts[9]);
+        String type = b64s(parts[10]);
+        int status = parseInt(parts[11], 0);
+        String reason = b64s(parts[12]);
+        byte[] resp = b64b(parts[13]);
+        String line1 = firstLine(raw);
+        String m = methodFromLine(line1);
+        String p = pathFromLine(line1);
+        String v = versionFromLine(line1);
+        String h = hostFromHeaders(raw);
+        if (!isHttp) {
+            m = m == null || m.isEmpty() ? "NON-HTTP" : m;
+            v = v == null || v.isEmpty() ? "RAW" : v;
+            p = p == null ? "" : p;
+            h = h == null ? "" : h;
+        }
+        String text = new String(raw, StandardCharsets.ISO_8859_1);
+        BridgeRecord r = new BridgeRecord(ts, uuid, srcIp, srcPort, dstIp, dstPort, pid, pname, m, p, h, v, raw.length, text, raw, isHttp, type);
+        r.statusCode = status;
+        r.reason = reason;
+        r.responseBytes = (resp == null || resp.length == 0) ? null : resp;
+        r.responseLength = r.responseBytes == null ? 0 : r.responseBytes.length;
+        r.responseText = null;
+        return r;
+    }
+
+    private static String b64(String s) {
+        return Base64.getEncoder().encodeToString(s == null ? new byte[0] : s.getBytes(StandardCharsets.ISO_8859_1));
+    }
+
+    private static String b64(byte[] b) {
+        return Base64.getEncoder().encodeToString(b == null ? new byte[0] : b);
+    }
+
+    private static String b64s(String s) {
+        byte[] b = Base64.getDecoder().decode(s == null ? "" : s);
+        return new String(b, StandardCharsets.ISO_8859_1);
+    }
+
+    private static byte[] b64b(String s) {
+        if (s == null || s.isEmpty()) return new byte[0];
+        return Base64.getDecoder().decode(s);
+    }
+
+    private static String[] split(String s, int expected) {
+        String[] p = new String[expected];
+        int idx = 0;
+        int start = 0;
+        for (int i = 0; i < s.length() && idx < expected; i++) {
+            if (s.charAt(i) == '\t') {
+                p[idx++] = s.substring(start, i);
+                start = i + 1;
+            }
+        }
+        if (idx < expected) p[idx++] = s.substring(start);
+        while (idx < expected) p[idx++] = "";
+        return p;
+    }
+
+    private static int parseInt(String s, int d) {
+        try { return Integer.parseInt(s); } catch (Exception e) { return d; }
+    }
+
+    private static long parseLong(String s, long d) {
+        try { return Long.parseLong(s); } catch (Exception e) { return d; }
     }
 }

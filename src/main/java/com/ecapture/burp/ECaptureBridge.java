@@ -7,6 +7,7 @@ import burp.api.montoya.ui.UserInterface;
 import burp.api.montoya.ui.editor.RawEditor;
 import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.HttpResponseEditor;
+import burp.api.montoya.ui.editor.EditorOptions;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.core.ByteArray;
 import static burp.api.montoya.core.ByteArray.byteArray;
@@ -20,6 +21,7 @@ import com.ecapture.burp.proto.ECaptureProto;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.drafts.Draft_6455;
+import burp.api.montoya.persistence.PersistedObject;
 
 import javax.swing.SwingUtilities;
 import java.net.InetSocketAddress;
@@ -47,6 +49,7 @@ public class ECaptureBridge implements BurpExtension {
     private int maxReconnectAttempts = 10;
     private final java.util.concurrent.ConcurrentHashMap<String, BridgeRecord> recordsByHash = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.ConcurrentHashMap<Integer, String> idsToHash = new java.util.concurrent.ConcurrentHashMap<>();
+    private PersistedObject extData;
 
     @Override
     public void initialize(MontoyaApi api) {
@@ -54,12 +57,13 @@ public class ECaptureBridge implements BurpExtension {
         this.logging = api.logging();
         api.extension().setName("eCapture Bridge");
         UserInterface ui = api.userInterface();
-        requestEditor = ui.createRawEditor();
-        httpEditor = ui.createHttpRequestEditor();
-        responseEditor = ui.createHttpResponseEditor();
+        requestEditor = ui.createRawEditor(EditorOptions.READ_ONLY);
+        httpEditor = ui.createHttpRequestEditor(EditorOptions.READ_ONLY);
+        responseEditor = ui.createHttpResponseEditor(EditorOptions.READ_ONLY);
         this.panel = new BridgePanel(this, requestEditor, httpEditor, responseEditor);
         ui.applyThemeToComponent(panel);
         ui.registerSuiteTab("eCapture Bridge", panel);
+        extData = api.persistence().extensionData();
         scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
         loadPrefs();
         api.http().registerHttpHandler(new BridgeHttpHandler());
@@ -113,10 +117,8 @@ public class ECaptureBridge implements BurpExtension {
             }
             BridgeRecord r = BridgeRecord.fromEvent(evt, data);
             panel.addRecord(r);
-            requestEditor.setContents(byteArray(r.rawBytes));
             if (http) {
                 HttpRequest req = burp.api.montoya.http.message.requests.HttpRequest.httpRequest(byteArray(r.rawBytes));
-                httpEditor.setRequest(req);
                 recordsByHash.put(r.hash, r);
             }
         } catch (Exception e) {
@@ -265,6 +267,17 @@ public class ECaptureBridge implements BurpExtension {
         p.setString("ecapture.filter.status", statusFilter == null ? "" : statusFilter);
     }
 
+    void persistLogs(java.util.List<BridgeRecord> records) {
+        try {
+            if (extData == null) return;
+            StringBuilder sb = new StringBuilder();
+            for (BridgeRecord r : records) {
+                sb.append(r.toPersist()).append('\n');
+            }
+            extData.setString("ecapture.logs", sb.toString());
+        } catch (Exception ignored) {}
+    }
+
     private void loadPrefs() {
         var p = api.persistence().preferences();
         String ws = def(p.getString("ecapture.ws"), wsUrl);
@@ -281,6 +294,20 @@ public class ECaptureBridge implements BurpExtension {
         setAutoReconnect(auto);
         setMaxReconnectAttempts(maxRetry);
         panel.setInitialValues(ws, host, port, auto, maxRetry, maxHistory, search, mf, hf, sf);
+        try {
+            if (extData != null) {
+                String s = extData.getString("ecapture.logs");
+                if (s != null && !s.isEmpty()) {
+                    java.util.List<BridgeRecord> rs = new java.util.ArrayList<>();
+                    String[] lines = s.split("\n");
+                    for (String line : lines) {
+                        if (line == null || line.isEmpty()) continue;
+                        rs.add(BridgeRecord.fromPersist(line));
+                    }
+                    panel.addRecords(rs);
+                }
+            }
+        } catch (Exception ignored) {}
         panel.updateMaxHistory();
     }
 

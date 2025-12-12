@@ -51,7 +51,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 shadowJar {
-    archiveBaseName.set('eCapture-Bridge')
+    archiveBaseName.set('eCapture-burp-bridge')
     archiveClassifier.set('')
     archiveVersion.set(version)
     mergeServiceFiles()

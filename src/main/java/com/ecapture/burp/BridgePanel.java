@@ -33,6 +33,7 @@ import javax.swing.JFileChooser;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+ 
 
 class BridgePanel extends JPanel {
     private final ECaptureBridge bridge;
@@ -52,6 +53,7 @@ class BridgePanel extends JPanel {
     private final RawEditor rawEditor;
     private final HttpRequestEditor httpEditor;
     private final HttpResponseEditor responseEditor;
+    private final JTabbedPane editorsTabs;
     private final JTextField searchField;
     private final JTextField methodFilterField;
     private final JTextField hostFilterField;
@@ -77,17 +79,17 @@ class BridgePanel extends JPanel {
         disconnectBtn = new JButton("Disconnect");
         autoReconnectBox = new JCheckBox("Auto Reconnect", true);
         statusDot = new DotIcon(new Color(0xD93025));
-        statusLabel = new JLabel("未连接");
+        statusLabel = new JLabel("Disconnected");
         statusLabel.setOpaque(false);
         statusLabel.setForeground(new Color(0x212121));
         statusLabel.setIcon(statusDot);
         statusLabel.setIconTextGap(6);
         statusLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xBDBDBD), 1, true), new EmptyBorder(2, 8, 2, 8)));
-        totalLabel = new JLabel("总数 0");
+        totalLabel = new JLabel("Total 0");
         totalLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xBDBDBD), 1, true), new EmptyBorder(2, 8, 2, 8)));
         httpLabel = new JLabel("HTTP 0");
         httpLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xBDBDBD), 1, true), new EmptyBorder(2, 8, 2, 8)));
-        nonHttpLabel = new JLabel("非HTTP 0");
+        nonHttpLabel = new JLabel("Non-HTTP 0");
         nonHttpLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xBDBDBD), 1, true), new EmptyBorder(2, 8, 2, 8)));
         searchField = new JTextField("", 18);
         methodFilterField = new JTextField("", 8);
@@ -108,13 +110,13 @@ class BridgePanel extends JPanel {
         gbc.gridx = 2; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Proxy Host"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 3; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 3; gbc.gridy = 0; gbc.weightx = 0.25; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(proxyHostField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 4; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Port"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 5; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 5; gbc.gridy = 0; gbc.weightx = 0.1; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(proxyPortField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 6; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4);
@@ -138,7 +140,7 @@ class BridgePanel extends JPanel {
         gbc.gridx = 12; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Max History"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 13; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 13; gbc.gridy = 0; gbc.weightx = 0.1; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(maxHistoryField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 14; gbc.gridy = 0; gbc.insets = new Insets(4,4,4,4);
@@ -160,37 +162,71 @@ class BridgePanel extends JPanel {
         gbc.gridx = 2; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Method"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 3; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 3; gbc.gridy = 1; gbc.weightx = 0.2; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(methodFilterField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 4; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Host"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 5; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 5; gbc.gridy = 1; gbc.weightx = 0.3; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(hostFilterField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 6; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4);
         top.add(new JLabel("Status"), gbc);
         gbc = new GridBagConstraints();
-        gbc.gridx = 7; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 7; gbc.gridy = 1; gbc.weightx = 0.2; gbc.insets = new Insets(4,4,4,4); gbc.fill = GridBagConstraints.HORIZONTAL;
         top.add(statusFilterField, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 8; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4);
         top.add(statusLabel, gbc);
+        JButton clearBtn = new JButton("Clear Logs");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 9; gbc.gridy = 1; gbc.insets = new Insets(4,4,4,4);
+        top.add(clearBtn, gbc);
         add(top, BorderLayout.NORTH);
 
         tableModel = new HistoryTableModel();
         table = new JTable(tableModel);
         TableRowSorter<HistoryTableModel> sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
+        sorter.setSortable(0, false);
+        table.getColumnModel().getColumn(0).setCellRenderer(new IndexRenderer());
+        table.getColumnModel().getColumn(0).setMinWidth(40);
+        table.getColumnModel().getColumn(0).setMaxWidth(80);
+        table.getColumnModel().getColumn(0).setPreferredWidth(60);
+        table.getColumnModel().getColumn(1).setPreferredWidth(160);
+        table.getColumnModel().getColumn(2).setPreferredWidth(80);
+        table.getColumnModel().getColumn(3).setMinWidth(140);
+        table.getColumnModel().getColumn(3).setPreferredWidth(280);
+        table.getColumnModel().getColumn(4).setMinWidth(140);
+        table.getColumnModel().getColumn(4).setPreferredWidth(200);
+        table.getColumnModel().getColumn(5).setPreferredWidth(90);
+        table.getColumnModel().getColumn(6).setPreferredWidth(100);
+        table.getColumnModel().getColumn(7).setPreferredWidth(80);
+        table.getColumnModel().getColumn(8).setPreferredWidth(90);
+        table.getColumnModel().getColumn(9).setPreferredWidth(160);
+        table.getColumnModel().getColumn(10).setMinWidth(200);
+        table.getColumnModel().getColumn(10).setPreferredWidth(240);
+        
         table.setPreferredScrollableViewportSize(new Dimension(600, 300));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.setFillsViewportHeight(true);
         JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setMinimumSize(new Dimension(0, 120));
         Component reqView = httpEditor.uiComponent();
         Component respView = responseEditor.uiComponent();
+        Component rawView = rawEditor.uiComponent();
         JSplitPane rightSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, reqView, respView);
         rightSplit.setResizeWeight(0.5);
-        JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScroll, rightSplit);
+        rightSplit.setContinuousLayout(true);
+        rightSplit.setMinimumSize(new Dimension(0, 120));
+        editorsTabs = new JTabbedPane();
+        editorsTabs.addTab("HTTP", rightSplit);
+        editorsTabs.addTab("Raw", rawView);
+        JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScroll, editorsTabs);
         mainSplit.setResizeWeight(0.55);
+        mainSplit.setContinuousLayout(true);
+        mainSplit.setOneTouchExpandable(true);
         add(mainSplit, BorderLayout.CENTER);
 
         connectBtn.addActionListener(e -> {
@@ -239,6 +275,11 @@ class BridgePanel extends JPanel {
         add(bottomBar, BorderLayout.SOUTH);
         exportSelBtn.addActionListener(e -> exportSelected());
         exportAllBtn.addActionListener(e -> exportAll());
+        clearBtn.addActionListener(e -> {
+            tableModel.clear();
+            updateCounters();
+            bridge.persistLogs(java.util.Collections.emptyList());
+        });
         table.getSelectionModel().addListSelectionListener(e -> {
             int i = table.getSelectedRow();
             if (i >= 0) {
@@ -246,10 +287,13 @@ class BridgePanel extends JPanel {
                 rawEditor.setContents(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes));
                 rawEditor.setCaretPosition(0);
                 if (r.isHttp) {
+                    editorsTabs.setSelectedIndex(0);
                     httpEditor.setRequest(burp.api.montoya.http.message.requests.HttpRequest.httpRequest(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes)));
                     if (r.responseBytes != null) {
                         responseEditor.setResponse(burp.api.montoya.http.message.responses.HttpResponse.httpResponse(burp.api.montoya.core.ByteArray.byteArray(r.responseBytes)));
                     }
+                } else {
+                    editorsTabs.setSelectedIndex(1);
                 }
             }
         });
@@ -264,13 +308,17 @@ class BridgePanel extends JPanel {
 
     void addRecord(BridgeRecord r) {
         SwingUtilities.invokeLater(() -> {
+            int selectedViewRow = table.getSelectedRow();
             tableModel.add(r);
-            int i = tableModel.getRowCount() - 1;
-            if (i >= 0) {
-                int viewIdx = table.convertRowIndexToView(i);
-                if (viewIdx >= 0) table.setRowSelectionInterval(viewIdx, viewIdx);
+            if (selectedViewRow < 0) {
+                int i = tableModel.getRowCount() - 1;
+                if (i >= 0) {
+                    int viewIdx = table.convertRowIndexToView(i);
+                    if (viewIdx >= 0) table.setRowSelectionInterval(viewIdx, viewIdx);
+                }
             }
             updateCounters();
+            bridge.persistLogs(tableModel.getAll());
         });
     }
 
@@ -294,18 +342,18 @@ class BridgePanel extends JPanel {
     private void updateStatusStyle(String s) {
         String v = s == null ? "" : s.trim().toLowerCase();
         if (v.equals("connected")) {
-            statusLabel.setText("已连接");
+            statusLabel.setText("Connected");
             statusDot.setColor(new Color(0x34A853));
             statusLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xA5D6A7), 1, true), new EmptyBorder(2, 8, 2, 8)));
             return;
         }
         if (v.equals("connecting") || v.startsWith("reconnecting")) {
-            statusLabel.setText("连接中…");
+            statusLabel.setText("Connecting…");
             statusDot.setColor(new Color(0xF4B400));
             statusLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xFFE082), 1, true), new EmptyBorder(2, 8, 2, 8)));
             return;
         }
-        statusLabel.setText("未连接");
+        statusLabel.setText("Disconnected");
         statusDot.setColor(new Color(0xD93025));
         statusLabel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(0xFFCDD2), 1, true), new EmptyBorder(2, 8, 2, 8)));
     }
@@ -317,9 +365,9 @@ class BridgePanel extends JPanel {
             if (r.isHttp) http++;
         }
         int nonHttp = Math.max(0, total - http);
-        totalLabel.setText("总数 " + total);
+        totalLabel.setText("Total " + total);
         httpLabel.setText("HTTP " + http);
-        nonHttpLabel.setText("非HTTP " + nonHttp);
+        nonHttpLabel.setText("Non-HTTP " + nonHttp);
     }
 
     private static class DotIcon implements Icon {
@@ -334,6 +382,15 @@ class BridgePanel extends JPanel {
             g.fillOval(x, y, size, size);
             g.setColor(color.darker());
             g.drawOval(x, y, size, size);
+        }
+    }
+
+    private static class IndexRenderer extends javax.swing.table.DefaultTableCellRenderer {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setText(String.valueOf(row + 1));
+            return this;
         }
     }
 
@@ -363,15 +420,25 @@ class BridgePanel extends JPanel {
 
     private boolean matchAdvanced(RowFilter.Entry<? extends HistoryTableModel, ? extends Integer> entry, String mf, String hf, String sf) {
         boolean ok = true;
-        if (!mf.isEmpty()) ok &= entry.getValue(3).toString().toLowerCase().contains(mf);
-        if (!hf.isEmpty()) ok &= entry.getValue(5).toString().toLowerCase().contains(hf);
-        if (!sf.isEmpty()) ok &= entry.getValue(8).toString().contains(sf);
+        if (!mf.isEmpty()) ok &= entry.getValue(2).toString().toLowerCase().contains(mf);
+        if (!hf.isEmpty()) ok &= entry.getValue(4).toString().toLowerCase().contains(hf);
+        if (!sf.isEmpty()) ok &= entry.getValue(7).toString().contains(sf);
         return ok;
     }
 
     void updateMaxHistory() {
         int v = parsePort(maxHistoryField.getText().trim());
         tableModel.setMaxSize(Math.max(1, v));
+    }
+
+    
+    void addRecords(java.util.List<BridgeRecord> rs) {
+        SwingUtilities.invokeLater(() -> {
+            for (BridgeRecord r : rs) {
+                tableModel.add(r);
+            }
+            updateCounters();
+        });
     }
 
     private void exportSelected() {
@@ -425,13 +492,21 @@ class BridgePanel extends JPanel {
         int idx = tableModel.indexOfByHash(r.hash);
         if (idx >= 0) {
             tableModel.updateRow(idx);
-            int viewIdx = table.convertRowIndexToView(idx);
-            if (viewIdx >= 0) {
-                table.setRowSelectionInterval(viewIdx, viewIdx);
-                rawEditor.setContents(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes));
-                httpEditor.setRequest(burp.api.montoya.http.message.requests.HttpRequest.httpRequest(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes)));
-                if (r.responseBytes != null) {
-                    responseEditor.setResponse(burp.api.montoya.http.message.responses.HttpResponse.httpResponse(burp.api.montoya.core.ByteArray.byteArray(r.responseBytes)));
+            int selView = table.getSelectedRow();
+            if (selView >= 0) {
+                int selModel = table.convertRowIndexToModel(selView);
+                if (selModel == idx) {
+                    rawEditor.setContents(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes));
+                    rawEditor.setCaretPosition(0);
+                    if (r.isHttp) {
+                        editorsTabs.setSelectedIndex(0);
+                        httpEditor.setRequest(burp.api.montoya.http.message.requests.HttpRequest.httpRequest(burp.api.montoya.core.ByteArray.byteArray(r.rawBytes)));
+                        if (r.responseBytes != null) {
+                            responseEditor.setResponse(burp.api.montoya.http.message.responses.HttpResponse.httpResponse(burp.api.montoya.core.ByteArray.byteArray(r.responseBytes)));
+                        }
+                    } else {
+                        editorsTabs.setSelectedIndex(1);
+                    }
                 }
             }
         }
